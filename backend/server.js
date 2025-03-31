@@ -1,7 +1,12 @@
 const express = require('express'); // which is an backend web application
+const colors = require('colors')
 const { errorHandler } = require('./middleware/errorMiddleware');
+const connectDB = require('./config/db');
 const dotenv = require('dotenv').config(); // which is an environment variables
 const port = process.env.PORT || 5000;
+
+// Connect with MongoDB
+connectDB();
 
 // Initialize Express
 const app = express();
