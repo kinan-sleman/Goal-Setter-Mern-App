@@ -1,15 +1,10 @@
 const express = require("express");
 const { getGoals, deleteGoal, updateGoal, setGoal } = require("../controllers/goalController");
-// This variable call express routes
+const { protect } = require("../middleware/authMiddelware");
+
 const router = express.Router(); 
-router.route("/").get(getGoals).post(setGoal);
-router.route("/:id").put(updateGoal).delete(deleteGoal);
-// This is a short hand for writing:
 
-// router.get("/", getGoals);
-// router.post("/", setGoal);
-// router.put("/", updateGoal);
-// router.delete("/", deleteGoal);
+router.route("/").get(protect, getGoals).post(protect, setGoal);
+router.route("/:id").put(protect, updateGoal).delete(protect, deleteGoal);;
 
-// export this module
 module.exports = router

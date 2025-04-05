@@ -1,5 +1,7 @@
 const asyncHandler = require("express-async-handler")
 const Goal = require("../models/goalModel")
+const User = require("../models/userModel")
+const apiResponse = require("../utils/apiResponse")
 
 /**
  * @description Get Goals
@@ -7,9 +9,8 @@ const Goal = require("../models/goalModel")
  * @access Private
  */
 const getGoals = asyncHandler(async (req, res) => {
-    const goals = await Goal.find() // we can type find({}) to find by user for example, but if we need to fetch all we just type find()
-    const statusCode = 200
-    res.status(statusCode).json({ status: statusCode, message: "Goals Fetched Successfully", data: goals });
+    const goals = await Goal.find({ user: req.user.id })
+    apiResponse(res, 200, "Goals Fetched Successfully", goals)
 })
 
 /**
@@ -24,10 +25,10 @@ const setGoal = asyncHandler(async (req, res) => {
         throw new Error("Text Field is required");
     }
     const goal = await Goal.create({
-        text: req.body.text
+        text: req.body.text,
+        user: req.user.id,
     });
-    const statusCode = 200
-    res.status(statusCode).json({ status: statusCode, message: "Goal Created Successfully", data: goal })
+    apiResponse(res, 200, "Goal Created Successfully", goal)
 })
 
 /**
@@ -41,11 +42,20 @@ const updateGoal = asyncHandler(async (req, res) => {
         res.status(400)
         throw new Error("Goal Not Found")
     }
-    const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
-        new: true  // to create if doesn't exist
-    })
-    const statusCode = 200;
-    res.status(statusCode).json({ status: statusCode, message: `Goal Updated Successfully`, data: updatedGoal })
+    const updatedGoal = await Goal.findByIdAndUpdate(
+        req.params.id,
+        { ...req.body, user: req.user.id },
+        { new: true }
+    )
+    if(!req.user) {
+        res.status(404);
+        throw new Error("User not found")
+    }
+    if(req.user.id !== goal.user.toString()) {
+        res.status(401);
+        throw new Error("Not Authorized")
+    }
+    apiResponse(res, 200, "Goal Updated Successfully", updatedGoal)
 })
 
 /**
@@ -59,8 +69,15 @@ const deleteGoal = asyncHandler(async (req, res) => {
         res.status(400)
         throw new Error("Goal Not Found")
     }
-    const statusCode = 200;
-    res.status(statusCode).json({ status: statusCode, message: `Goal Deleted Successfully`, data: goal })
+    if(!req.user) {
+        res.status(404);
+        throw new Error("User not found")
+    }
+    if(req.user.id !== goal.user.toString()) {
+        res.status(401);
+        throw new Error("User Not Authorized")
+    }
+    apiResponse(res, 200, "Goal Deleted Successfully", goal)
 })
 
 module.exports = {

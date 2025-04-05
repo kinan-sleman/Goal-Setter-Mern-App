@@ -1,25 +1,40 @@
-const express = require('express'); // which is an backend web application
+const express = require('express');
 const colors = require('colors')
+const cors = require("cors")
+const path = require("path")
+
 const { errorHandler } = require('./middleware/errorMiddleware');
 const connectDB = require('./config/db');
-const dotenv = require('dotenv').config(); // which is an environment variables
+const dotenv = require('dotenv').config();
 const port = process.env.PORT || 5000;
+const corsOptions = {
+    origin: process.env.BASE_URI,
+    methods: 'GET,POST,PUT,DELETE,PATCH',
+    credentials: true,
+};
 
-// Connect with MongoDB
 connectDB();
 
-// Initialize Express
 const app = express();
 
-// Support send data in body
+app.use(cors(corsOptions));
+
 app.use(express.json())
 app.use(express.urlencoded())
 
-//  Goals
 app.use('/api/goals', require('./routes/goalRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 
-// Middleware
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, '../frontend/dist')))
+    app.get('*', (req, res) =>
+        res.sendFile(
+            path.resolve(__dirname, '../', 'frontend', 'dist', 'index.html')
+        )
+    )
+} else {
+    app.get("/", (req,res) => res.send('Please set as production'))
+}
 app.use(errorHandler);
 
-// Start Server
 app.listen(port, () => console.log(`Server Started On Port ${port}`))
